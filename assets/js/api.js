@@ -63,14 +63,31 @@ const api = {
     async deleteRecord(id) {
         try {
             const response = await fetch(`${API_ENDPOINTS.delete}/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
             });
+
             if (!response.ok) {
-                throw new Error('删除记录失败');
+                const errorData = await response.text();
+                console.error('删除失败响应:', errorData);
+                throw new Error(`删除失败: ${response.status} ${errorData}`);
             }
-            return await response.json();
+
+            // 检查响应内容类型
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            } else {
+                return { success: true }; // 如果没有 JSON 响应，返回成功状态
+            }
         } catch (error) {
             console.error('删除记录失败:', error);
+            if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                throw new Error('网络连接失败，请检查网络连接后重试');
+            }
             throw error;
         }
     }
