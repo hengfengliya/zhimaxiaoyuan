@@ -307,7 +307,7 @@
                 // 更新本地记录对象
                 currentRecord.title = title;
                 currentRecord.description = description;
-
+                
                 // 将编辑后的时间值转换为 ISO 格式并更新 timestamp 字段
                 if (editedTimestamp) {
                     const dateObj = new Date(editedTimestamp); // 解析输入框的值
@@ -329,13 +329,13 @@
                 console.log('正在调用 API 保存记录:', currentRecord);
                 await api.saveRecord(currentRecord); // 调用 api.js 中的 saveRecord 函数
                 console.log('记录保存到 R2 成功。新的 timestamp:', currentRecord.timestamp);
-
-                // 更新显示
-                renderDetail();
-                cancelEdit();
-
-                // 显示成功消息
-                alert('保存成功！');
+                    
+                    // 更新显示
+                    renderDetail();
+                    cancelEdit();
+                    
+                    // 显示成功消息
+                    alert('保存成功！');
 
             } catch (error) {
                 console.error('保存失败:', error);
@@ -345,8 +345,8 @@
                 const saveBtn = document.querySelector('button[onclick="saveEdit()"]');
                 // 检查按钮是否还存在（如果在跳转前保存成功并跳转了，可能不存在）
                 if(saveBtn) {
-                    saveBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
-                    saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
+                saveBtn.disabled = false;
                 }
             }
         }

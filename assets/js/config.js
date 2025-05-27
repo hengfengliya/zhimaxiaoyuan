@@ -1,4 +1,16 @@
-const config = {
+// API 基础配置
+const API_BASE_URL = 'https://zhimaxiaoyuan.onrender.com';
+
+// API 端点配置
+const API_ENDPOINTS = {
+    upload: `${API_BASE_URL}/api/upload`,
+    list: `${API_BASE_URL}/api/records`,
+    delete: `${API_BASE_URL}/api/records`,
+    get: `${API_BASE_URL}/api/records`
+};
+
+// AI 配置
+const AI_CONFIG = {
     api: {
         baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
         apiKey: 'b4884617-7a44-451b-b350-215bf46722f5',
@@ -12,16 +24,6 @@ const config = {
 // 移除 Cloudflare R2 配置
 // const R2_CONFIG = { ... };
 
-// API 端点配置
-const API_ENDPOINTS = {
-    upload: '/api/upload',
-    list: '/api/records',
-    delete: '/api/records',
-    get: '/api/records'
-};
-
-// 导出 API_ENDPOINTS
-export { API_ENDPOINTS };
-
-// 注意：config 中的 AI API 密钥也应通过后端调用
-export default config;
+// 将配置暴露到全局作用域
+window.API_ENDPOINTS = API_ENDPOINTS;
+window.AI_CONFIG = AI_CONFIG;

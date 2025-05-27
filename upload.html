@@ -6,11 +6,20 @@
     <title>上传 - 美食记录</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- 添加配置和API脚本 -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api.js"></script>
 </head>
 <body class="bg-gray-50">
     <!-- 复用相同的导航栏结构 -->
     <nav class="fixed top-0 w-full bg-white shadow-sm z-50">
-        <!-- ...与 index.html 相同的导航栏代码... -->
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="text-xl font-bold text-gray-800">美食记录</a>
+            <div class="space-x-4">
+                <a href="index.html" class="text-gray-600 hover:text-gray-900">首页</a>
+                <a href="upload.html" class="text-blue-500">上传</a>
+            </div>
+        </div>
     </nav>
 
     <main class="container mx-auto px-4 pt-20">
@@ -33,7 +42,7 @@
             </div>
 
             <!-- 提交按钮 -->
-            <button class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
+            <button id="submit-btn" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
                 确认上传
             </button>
         </div>
@@ -41,7 +50,10 @@
 
     <script>
         // 文件上传处理
-        document.getElementById('food-images').addEventListener('change', function(e) {
+        document.getElementById('food-images').addEventListener('change', handleFileSelect);
+        document.getElementById('submit-btn').addEventListener('click', handleSubmit);
+
+        async function handleFileSelect(e) {
             const files = Array.from(e.target.files);
             const container = document.getElementById('preview-container');
             container.innerHTML = '';
@@ -60,7 +72,35 @@
                 }
                 reader.readAsDataURL(file);
             });
-        });
+        }
+
+        async function handleSubmit() {
+            const files = document.getElementById('food-images').files;
+            if (!files.length) {
+                alert('请选择要上传的图片');
+                return;
+            }
+
+            try {
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.disabled = true;
+                submitBtn.textContent = '上传中...';
+
+                for (let file of files) {
+                    await uploadFile(file);
+                }
+
+                alert('上传成功！');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('上传失败:', error);
+                alert('上传失败，请重试');
+            } finally {
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '确认上传';
+            }
+        }
     </script>
 </body>
 </html>

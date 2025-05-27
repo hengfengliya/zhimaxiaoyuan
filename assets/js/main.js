@@ -33,7 +33,7 @@ const foodRecords = {
 
     async loadFromR2() {
         try {
-            const response = await fetch('http://localhost:3000/api/records'); // 注意：这里还是本地地址，需要换成 Render 地址
+            const response = await fetch('https://zhimaxiaoyuan.onrender.com/api/records');
             if (!response.ok) {
                 throw new Error('获取记录失败');
             }
@@ -130,7 +130,7 @@ const foodRecords = {
             console.log('删除前 foodRecords.items:', this.items);
             console.log('删除前记录数量:', this.items.length);
 
-            const response = await fetch(`http://localhost:3000/api/records/${id}`, {
+            const response = await fetch(`https://zhimaxiaoyuan.onrender.com/api/records/${id}`, {
                 method: 'DELETE'
             });
             
@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
     highlightCurrentPage();
     foodRecords.init();
-    
+
     // 搜索功能
     const searchInput = document.querySelector('input[type="search"]');
     let searchTimeout;

@@ -6,7 +6,7 @@ const api = {
         formData.append('file', file);
 
         try {
-            const response = await fetch('http://localhost:3000/api/upload', {
+            const response = await fetch(API_ENDPOINTS.upload, {
                 method: 'POST',
                 body: formData
             });
@@ -26,7 +26,7 @@ const api = {
     // 保存记录到 R2
     async saveRecord(record) {
         try {
-            const response = await fetch('http://localhost:3000/api/records', {
+            const response = await fetch(API_ENDPOINTS.list, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -48,7 +48,7 @@ const api = {
     // 获取所有记录
     async getAllRecords() {
         try {
-            const response = await fetch('http://localhost:3000/api/records');
+            const response = await fetch(API_ENDPOINTS.list);
             if (!response.ok) {
                 throw new Error('获取记录失败');
             }
@@ -62,7 +62,7 @@ const api = {
     // 删除记录
     async deleteRecord(id) {
         try {
-            const response = await fetch(`http://localhost:3000/api/records/${id}`, {
+            const response = await fetch(`${API_ENDPOINTS.delete}/${id}`, {
                 method: 'DELETE'
             });
             if (!response.ok) {
@@ -74,4 +74,10 @@ const api = {
             throw error;
         }
     }
-}; 
+};
+
+// 导出 API 函数
+window.uploadFile = api.uploadFile;
+window.saveRecord = api.saveRecord;
+window.getAllRecords = api.getAllRecords;
+window.deleteRecord = api.deleteRecord; 
