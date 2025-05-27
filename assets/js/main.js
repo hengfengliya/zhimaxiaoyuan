@@ -33,20 +33,34 @@ const foodRecords = {
 
     async loadFromR2() {
         try {
-            const response = await fetch('http://localhost:3000/api/records');
+            const response = await fetch('http://localhost:3000/api/records'); // 注意：这里还是本地地址，需要换成 Render 地址
             if (!response.ok) {
                 throw new Error('获取记录失败');
             }
-            this.items = await response.json();
-            console.log('从 R2 加载记录:', this.items);
+            let records = await response.json();
+            console.log('从 R2 加载记录:', records);
+
+            // 处理旧记录，将 date 字段的值赋给 timestamp
+            this.items = records.map(item => {
+                if (!item.timestamp && item.date) {
+                    item.timestamp = item.date;
+                }
+                return item;
+            });
+
+            // 确保按时间排序（使用 timestamp）
+            this.items.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            console.log('加载并处理后的记录:', this.items);
+
         } catch (error) {
             console.error('从 R2 加载记录失败:', error);
             this.items = [];
         }
     },
 
-    formatDate(isoString) {
-        const date = new Date(isoString);
+    formatDate(dateInput) {
+        const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
@@ -72,6 +86,14 @@ const foodRecords = {
 
     createCardHTML(item) {
         const coverImage = item.images.find(img => img.isCover)?.url || item.images[0]?.url;
+        
+        const uploadDate = new Date(item.timestamp); // 尝试解析 timestamp
+
+        // 检查日期对象是否有效
+        const displayTime = uploadDate instanceof Date && !isNaN(uploadDate) 
+            ? this.formatDate(uploadDate) // 将 uploadDate 对象传递给 formatDate
+            : 'Invalid Date';
+
         return `
             <div class="food-card group cursor-pointer" data-id="${item.id}" onclick="foodRecords.viewDetail('${item.id}')">
                 <div class="relative aspect-[4/3] overflow-hidden rounded-lg">
@@ -81,7 +103,7 @@ const foodRecords = {
                 </div>
                 <div class="p-4">
                     <h3 class="text-base font-semibold mb-1">${item.title}</h3>
-                    <time class="block text-sm text-gray-500 italic mb-2">${this.formatDate(item.date)}</time>
+                    <time class="block text-sm text-gray-500 italic mb-2">${displayTime}</time>
                     <p class="text-sm text-gray-500 italic mb-2">${item.description}</p>
                     <div class="flex flex-wrap gap-2">
                         ${(item.tags || []).map(tag => 

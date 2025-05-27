@@ -81,6 +81,10 @@
                         <textarea id="edit-description" rows="3" class="w-full px-3 py-2 border rounded form-control"></textarea>
                     </div>
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">上传时间</label>
+                        <input type="datetime-local" id="edit-timestamp" class="w-full px-3 py-2 border rounded form-control">
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium mb-1">标签</label>
                         <div id="edit-tags" class="flex flex-wrap gap-2"></div>
                         <div class="flex gap-2 mt-2">                            <input type="text" id="edit-custom-tag" placeholder="添加新标签" 
@@ -121,6 +125,11 @@
                 currentRecord = JSON.parse(recordData);
                 console.log('加载的记录:', currentRecord);
 
+                // 处理旧记录，将 date 字段的值赋给 timestamp
+                if (!currentRecord.timestamp && currentRecord.date) {
+                    currentRecord.timestamp = currentRecord.date;
+                }
+
                 if (!currentRecord || !currentRecord.images || currentRecord.images.length === 0) {
                     throw new Error('记录数据不完整');
                 }
@@ -142,7 +151,7 @@
             // 渲染缩略图
             renderThumbnails();            // 渲染信息
             document.getElementById('record-title').textContent = currentRecord.title || '';
-            document.getElementById('upload-time').textContent = new Date(currentRecord.date).toLocaleString();
+            document.getElementById('upload-time').textContent = new Date(currentRecord.timestamp).toLocaleString();
             document.getElementById('record-description').textContent = currentRecord.description || '';            document.getElementById('record-tags').innerHTML = currentRecord.tags.map(tag => 
                 `<span class="tag-glass-static inline-block m-1">#${tag}</span>`
             ).join('');
@@ -199,6 +208,25 @@
                 // 进入编辑模式
                 document.getElementById('edit-title').value = currentRecord.title;
                 document.getElementById('edit-description').value = currentRecord.description;
+                
+                // 格式化并填充上传时间
+                if (currentRecord.timestamp) {
+                    const uploadDate = new Date(currentRecord.timestamp);
+                    if (!isNaN(uploadDate.getTime())) { // 检查日期是否有效
+                        const year = uploadDate.getFullYear();
+                        const month = String(uploadDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(uploadDate.getDate()).padStart(2, '0');
+                        const hours = String(uploadDate.getHours()).padStart(2, '0');
+                        const minutes = String(uploadDate.getMinutes()).padStart(2, '0');
+                        // 填充格式为 YYYY-MM-DDTHH:mm (本地时间)
+                        document.getElementById('edit-timestamp').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    } else {
+                         document.getElementById('edit-timestamp').value = ''; // 无效日期则清空输入框
+                    }
+                } else {
+                    document.getElementById('edit-timestamp').value = ''; // 没有 timestamp 也清空
+                }
+
                 renderEditTags();
                 
                 editForm.classList.remove('hidden');
@@ -262,6 +290,7 @@
         async function saveEdit() {
             const title = document.getElementById('edit-title').value.trim();
             const description = document.getElementById('edit-description').value.trim();
+            const editedTimestamp = document.getElementById('edit-timestamp').value; // 获取编辑后的时间值
             
             if (!title) {
                 alert('标题不能为空！');
@@ -278,12 +307,28 @@
                 // 更新本地记录对象
                 currentRecord.title = title;
                 currentRecord.description = description;
+
+                // 将编辑后的时间值转换为 ISO 格式并更新 timestamp 字段
+                if (editedTimestamp) {
+                    const dateObj = new Date(editedTimestamp); // 解析输入框的值
+                    if (!isNaN(dateObj.getTime())) { // 检查是否是有效日期
+                        currentRecord.timestamp = dateObj.toISOString(); // 转换为 ISO 格式
+                    } else {
+                        console.warn('编辑后的时间值无效:', editedTimestamp);
+                        // 可以选择给用户一个提示，或者保持原有时间不变
+                    }
+                } else {
+                    // 如果输入框为空，可以选择清空 timestamp 或保持原有时间不变
+                    // 这里选择保持原有时间不变，除非用户明确删除
+                    console.log('时间输入框为空，保持原有时间不变');
+                }
+
                 // 标签已经在 toggleEditTag 和 addEditTag 中直接修改了 currentRecord.tags
                 
                 // 调用 API 保存到 R2
                 console.log('正在调用 API 保存记录:', currentRecord);
                 await api.saveRecord(currentRecord); // 调用 api.js 中的 saveRecord 函数
-                console.log('记录保存到 R2 成功。');
+                console.log('记录保存到 R2 成功。新的 timestamp:', currentRecord.timestamp);
 
                 // 更新显示
                 renderDetail();
@@ -313,6 +358,7 @@
             // 重置表单内容
             document.getElementById('edit-title').value = currentRecord.title;
             document.getElementById('edit-description').value = currentRecord.description;
+            document.getElementById('edit-timestamp').value = currentRecord.timestamp.split('T')[0];
             renderEditTags();
             
             // 切换显示模式
