@@ -1,0 +1,86 @@
+:root {
+  --primary: #FF8FB1;
+  --primary-light: #FFB3C6;
+  --secondary: #95CDFF;
+  --accent: #B1F8CF;
+  --text: #525252;
+  --bg-light: #FFF9FB;
+  --shadow: 0 8px 16px rgba(255, 143, 177, 0.1);
+}
+
+/* 全局样式 */
+body {
+  background-color: var(--bg-light);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+}
+
+/* 按钮样式 */
+.btn-cute {
+  padding: 0.75rem 1.5rem;
+  border-radius: 20px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+/* 卡片样式 */
+.card-cute {
+  background: white;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.card-cute:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(255, 143, 177, 0.15);
+}
+
+/* 输入框样式 */
+.input-cute {
+  border: 2px solid var(--primary-light);
+  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.input-cute:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(255, 143, 177, 0.1);
+}
+
+/* 标签样式 */
+.tag-cute {
+  background: var(--secondary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.tag-cute:hover {
+  transform: scale(1.05);
+}
+
+/* 动画效果 */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}

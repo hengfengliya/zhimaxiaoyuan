@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>芝麻小圆记录 - 上传</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="../assets/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="nav-apple fixed top-0 w-full z-50 border-b border-gray-200">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-circle mr-2"></i>芝麻小圆记录
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/views/upload.html" class="btn-glass">
+                        上传
+                    </a>
+                </div>
+                <!-- 移动端菜单按钮 -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-800">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 移动端菜单 -->
+    <div id="mobile-menu" class="hidden md:hidden fixed top-16 left-0 w-full bg-white z-50 border-b border-gray-200">
+        <div class="container mx-auto px-4 py-2">
+            <a href="/views/upload.html" class="block py-2 text-gray-800 hover:text-gray-600">上传</a>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-4 pt-20">
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">上传美食照片</h2>
+                <span class="text-gray-500" id="current-time"></span>
+            </div>
+            
+            <!-- 图片上传区域 -->
+            <div class="upload-area" id="dropZone">
+                <input type="file" id="food-images" multiple accept="image/*" class="hidden">                <label for="food-images" class="cursor-pointer block w-full h-full p-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors glass-effect">
+                    <div class="text-center">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-600 mb-4"></i>
+                        <p class="text-gray-600">点击或拖拽上传图片</p>
+                        <p class="text-sm text-gray-500 mt-1">支持上传1-10张图片</p>
+                    </div>
+                </label>
+            </div>
+
+            <!-- 预览区域 -->
+            <div id="preview-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6"></div>
+
+            <!-- 公共信息输入区域 -->
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">标题</label>                    <input type="text" id="record-title" placeholder="给这组美食照片起个标题"
+                           class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 glass-effect">
+                </div>
+
+                <!-- 修改类型输入 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">类型</label>
+                    <div class="flex gap-2">                        <input type="text" id="food-type" placeholder="输入美食类型，如：中餐、甜点等"
+                               class="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 glass-effect">
+                    </div>
+                </div>
+
+                <!-- AI 识别结果展示区域 -->
+                <div id="ai-tags-container" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">AI 识别结果</label>
+                    <div id="ai-tags" class="flex flex-wrap gap-2"></div>
+                    <button onclick="applyAiTags()" class="mt-2 text-blue-500 text-sm hover:underline">
+                        应用识别结果到标签
+                    </button>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                    <textarea id="record-description" rows="3" placeholder="添加关于这顿美食的描述"
+                          class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">标签</label>            
+                    <div class="flex gap-2">
+                        <input type="text" id="custom-tag" placeholder="添加自定义标签" 
+                               class="px-3 py-1 border rounded focus:outline-none focus:ring-2 glass-effect">
+                        <button onclick="addCustomTag()" class="btn-glass">
+                            <i class="fas fa-plus"></i> 添加
+                        </button>
+                    </div>
+                    <div id="selected-tags" class="flex flex-wrap gap-2 mt-2"></div>
+                </div>
+            </div>            <!-- 上传进度 -->
+            <div id="upload-progress" class="hidden mb-4">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="glass-effect h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p class="text-sm text-gray-600 mt-2">正在上传: <span id="progress-text">0%</span></p>
+            </div>            <button id="submit-upload" class="w-full btn-glass">
+                <i class="fas fa-cloud-upload-alt mr-2"></i> 确认上传
+            </button>
+        </div>
+    </main>
+
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script>
+    // 全局变量
+    const config = {
+        api: {
+            baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+            apiKey: 'b4884617-7a44-451b-b350-215bf46722f5',
+            model: 'doubao-1.5-vision-lite-250315'
+        }
+    };
+
+    let uploadedFiles = [];
+    let selectedTags = new Set();
+
+    // 文件选择处理函数
+    async function handleFileSelect(event) {
+        const files = event.target.files || event.dataTransfer?.files;
+        if (!files) return;
+
+        try {
+            showLoading('正在上传图片...');
+            
+            // 上传所有图片到 R2
+            const uploadedImages = await Promise.all(
+                Array.from(files).map(async (file) => {
+                    const url = await api.uploadFile(file);
+                    return {
+                        url,
+                        isCover: false,
+                        file: file // 保存原始文件对象用于预览
+                    };
+                })
+            );
+
+            // 更新全局变量
+            uploadedFiles = uploadedFiles.concat(uploadedImages);
+            
+            // 更新预览
+            renderPreviews(uploadedFiles);
+            
+        } catch (error) {
+            console.error('上传失败:', error);
+            alert('上传失败: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // 渲染预览函数
+    function renderPreviews(files) {
+        console.log('开始渲染预览');
+        const container = document.getElementById('preview-container');
+        container.innerHTML = '';
+        
+        files.forEach((file, index) => {
+            const preview = document.createElement('div');
+            preview.className = 'mb-4'; 
+            preview.innerHTML = `
+                <div class="relative aspect-[4/3] overflow-hidden rounded-lg mb-2">
+                    <img src="${file.url}" 
+                         class="w-full h-full object-cover" 
+                         alt="预览图片">
+                </div>
+                <div class="flex items-center justify-center gap-2">
+                    <button class="analyze-btn btn-glass text-xs px-2 py-1" onclick="analyzeImage(uploadedFiles[${index}].file)">
+                        <i class="fas fa-magic mr-1"></i> 分析图片
+                    </button>
+                    <button class="delete-btn btn-glass-danger text-xs px-2 py-1" onclick="deleteImage(${index})">
+                        <i class="fas fa-trash-alt mr-1"></i> 删除
+                    </button>
+                </div>
+                <div class="mt-2">
+                    <label class="flex items-center">
+                        <input type="radio" 
+                               name="cover-image" 
+                               value="${index}" 
+                               ${index === 0 ? 'checked' : ''} 
+                               onchange="setCoverImage(${index})"
+                               class="mr-2">
+                        <span class="text-sm text-gray-600">设为封面</span>
+                    </label>
+                </div>
+            `;
+            container.appendChild(preview);
+        });
+    }
+
+    // 删除图片
+    function deleteImage(index) {
+        if (confirm('确定要删除这张图片吗？')) {
+            uploadedFiles.splice(index, 1);
+            renderPreviews(uploadedFiles);
+        }
+    }
+
+    // 设置封面图片
+    function setCoverImage(index) {
+        uploadedFiles.forEach((file, i) => {
+            file.isCover = i === index;
+        });
+    }
+
+    // 显示加载状态
+    function showLoading(message) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loading-overlay';
+        loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        loadingDiv.innerHTML = `
+            <div class="bg-white p-4 rounded-lg shadow-lg">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                <p class="mt-2 text-gray-700">${message}</p>
+            </div>
+        `;
+        document.body.appendChild(loadingDiv);
+    }
+
+    // 隐藏加载状态
+    function hideLoading() {
+        const loadingDiv = document.getElementById('loading-overlay');
+        if (loadingDiv) {
+            loadingDiv.remove();
+        }
+    }
+
+    // 更新 API 调用函数
+    async function analyzeImage(file) {
+        try {
+            showLoading('正在分析图片...');
+            console.log('开始图片分析...');
+
+            // 获取图片的 base64 数据
+            const base64Image = await convertToBase64(file);
+            
+            const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer b4884617-7a44-451b-b350-215bf46722f5'
+                },
+                body: JSON.stringify({
+                    model: "doubao-1.5-vision-lite-250315",
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                {
+                                    type: "text",
+                                    text: `请分析这张美食图片，并以严格的 JSON 格式返回分析结果。请确保返回的是合法的 JSON 字符串，不要包含任何其他文字说明。
+
+返回的 JSON 对象必须包含以下字段：
+{
+  "title": "基于图片内容，给出一个富有创意和吸引力的简短标题建议",
+  "type": "基于图片内容，给出主要的美食类型或菜系建议，力求具体（例如：'川菜', '法式甜点', '地中海料理'）",
+  "description": "描述今天吃了什么，包含一些细节，比如口味、配料等",
+  "tags": [
+    "食物类型",
+    "分类标签",
+    "口味",
+    "菜系"
+  ]
+}
+
+注意：
+1. 必须返回合法的 JSON 格式
+2. 不要包含任何额外的文字说明
+3. 不要使用中文标点符号
+4. 数组元素使用英文逗号分隔
+5. 所有字符串必须使用双引号`
+                                },
+                                {
+                                    type: "image_url",
+                                    image_url: {
+                                        url: base64Image
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                console.error('API错误响应:', errorData);
+                throw new Error(`API请求失败: ${response.status}, ${errorData}`);
+            }
+
+            const result = await response.json();
+            console.log('API返回结果:', result);
+
+            if (!result.choices?.[0]?.message?.content) {
+                throw new Error('API返回数据格式不正确');
+            }
+
+            const content = result.choices[0].message.content.trim();
+            console.log('API返回的原始内容:', content);
+
+            // 尝试清理内容，移除可能的非 JSON 部分
+            let jsonContent = content;
+            
+            // 如果内容以 ```json 开头，移除它
+            if (content.startsWith('```json')) {
+                jsonContent = content.replace(/^```json\n/, '');
+            }
+            // 如果内容以 ``` 开头，移除它
+            if (jsonContent.startsWith('```')) {
+                jsonContent = jsonContent.replace(/^```\n/, '');
+            }
+            // 如果内容以 ``` 结尾，移除它
+            if (jsonContent.endsWith('```')) {
+                jsonContent = jsonContent.replace(/\n```$/, '');
+            }
+            
+            // 移除开头和结尾的空白字符
+            jsonContent = jsonContent.trim();
+            
+            console.log('清理后的 JSON 内容:', jsonContent);
+            
+            const analysisResult = JSON.parse(jsonContent);
+            
+            // 验证必要的字段是否存在
+            const requiredFields = ['title', 'type', 'description', 'tags'];
+            const missingFields = requiredFields.filter(field => !analysisResult[field]);
+            
+            if (missingFields.length > 0) {
+                throw new Error(`返回的 JSON 缺少必要字段: ${missingFields.join(', ')}`);
+            }
+            
+            console.log('解析后的结果:', analysisResult);
+            fillFormWithAnalysis(analysisResult);
+
+        } catch (error) {
+            console.error('分析失败:', error);
+            alert('分析失败: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // 转换图片为base64
+    function convertToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                // 直接返回完整的 data URL
+                resolve(reader.result);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // 添加表单填充处理函数
+    function fillFormWithAnalysis(result) {
+        if (!result) return;
+        
+        console.log('开始填充表单:', result);
+
+        // 填充标题
+        const titleInput = document.getElementById('record-title');
+        if (titleInput && result.title) {
+            titleInput.value = result.title;
+        }
+
+        // 填充类型
+        const typeInput = document.getElementById('food-type');
+        if (typeInput && result.type) {
+            typeInput.value = result.type;
+        }
+
+        // 填充描述
+        const descInput = document.getElementById('record-description');
+        if (descInput && result.description) {
+            descInput.value = result.description;
+        }
+
+        // 填充标签
+        if (result.tags && Array.isArray(result.tags)) {
+            selectedTags.clear();
+            result.tags.forEach(tag => {
+                if (tag && typeof tag === 'string') {
+                    selectedTags.add(tag.trim());
+                }
+            });
+            updateSelectedTagsDisplay();
+        }
+    }
+
+    // 标签切换函数
+    function toggleTag(tag) {
+        const btn = document.querySelector(`[data-tag="${tag}"]`);
+        if (selectedTags.has(tag)) {
+            selectedTags.delete(tag);
+            btn.classList.remove('btn-glass-active');
+        } else {
+            selectedTags.add(tag);
+            btn.classList.add('btn-glass-active');
+        }
+        updateSelectedTagsDisplay();
+    }
+
+    // 更新已选标签显示函数
+    function updateSelectedTagsDisplay() {
+        const container = document.getElementById('selected-tags');
+        if (!container) return;
+        
+        container.innerHTML = Array.from(selectedTags).map(tag => `
+            <span class="btn-glass">
+                ${tag}
+                <button onclick="removeTag('${tag}')" class="ml-2 text-white hover:text-red-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </span>
+        `).join('');
+    }
+
+    // 删除标签
+    function removeTag(tag) {
+        selectedTags.delete(tag);
+        updateSelectedTagsDisplay();
+    }
+
+    // 处理上传按钮点击
+    document.getElementById('submit-upload').addEventListener('click', async function() {
+        try {
+            const title = document.getElementById('record-title').value.trim();
+            const type = document.getElementById('food-type').value.trim();
+            const description = document.getElementById('record-description').value.trim();
+
+            if (!title || !type || uploadedFiles.length === 0) {
+                alert('请填写所有必填字段并上传至少一张图片');
+                return;
+            }
+
+            showLoading('正在保存...');
+
+            // 获取封面图片索引
+            const coverIndex = Array.from(document.querySelectorAll('input[name="cover-image"]'))
+                .findIndex(input => input.checked);
+
+            // 构建记录数据
+            const record = {
+                id: Date.now().toString(),
+                title: title,
+                type: type,
+                description: description,
+                tags: Array.from(selectedTags),
+                date: new Date().toISOString(),
+                images: uploadedFiles.map((file, index) => ({
+                    url: file.url,
+                    isCover: index === coverIndex
+                }))
+            };
+
+            // 保存到 R2
+            await api.saveRecord(record);
+            
+            alert('上传成功！');
+            window.location.href = '../index.html';
+        } catch (error) {
+            console.error('保存失败:', error);
+            alert('保存失败: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('food-images');
+        const dropZone = document.getElementById('dropZone');
+
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-blue-500');
+        });
+        
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500');
+            handleFileSelect(e);
+        });
+    });
+    </script>
+</body>
+</html>

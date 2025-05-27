@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>芝麻小圆记录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="../assets/css/styles.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="background: linear-gradient(135deg, #f6f8ff 0%, #f0f4ff 100%);">
+    <!-- 导航栏 -->
+    <nav class="nav-apple fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">                    <a href="../index.html" class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-circle mr-2"></i>芝麻小圆记录
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="upload.html" class="btn-glass z-50 relative">
+                        上传
+                    </a>
+                </div>
+                <!-- 移动端菜单按钮 -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-800">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 移动端菜单 -->
+    <div id="mobile-menu" class="hidden md:hidden fixed top-16 left-0 w-full bg-white z-50 border-b border-gray-200">
+        <div class="container mx-auto px-4 py-2">
+            <a href="/views/upload.html" class="block py-2 text-gray-800 hover:text-gray-600">上传</a>
+        </div>
+    </div>
+
+    <!-- 主要内容区域，添加顶部padding以避免与导航栏重叠 -->
+    <div class="container mx-auto px-4 pt-24">
+        <div class="max-w-4xl mx-auto">
+            <!-- 主图展示 -->
+            <div class="relative glass-effect rounded-lg p-4 mb-6"><div class="aspect-video relative">
+                    <img id="main-image" class="w-full h-full object-contain" src="" alt="">
+                    <button id="prev-btn" class="absolute left-4 top-1/2 -translate-y-1/2 btn-glass">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button id="next-btn" class="absolute right-4 top-1/2 -translate-y-1/2 btn-glass">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>            <!-- 缩略图预览 -->
+            <div class="glass-effect rounded-lg p-4 mb-6">
+                <div id="thumbnails" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
+            </div>
+
+            <!-- 详细信息 -->
+            <div class="glass-effect rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 id="record-title" class="text-2xl font-bold"></h1><div class="space-x-2">
+                        <button onclick="toggleEdit()" class="btn-glass">
+                            编辑
+                        </button>
+                        <button id="delete-button" class="btn-glass-danger">
+                            <i class="fas fa-trash-alt"></i> 删除
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 编辑表单 -->
+                <div id="edit-form" class="hidden space-y-4 mb-4">                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                        <input type="text" id="edit-title" class="w-full px-3 py-2 border rounded form-control">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                        <textarea id="edit-description" rows="3" class="w-full px-3 py-2 border rounded form-control"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">标签</label>
+                        <div id="edit-tags" class="flex flex-wrap gap-2"></div>
+                        <div class="flex gap-2 mt-2">                            <input type="text" id="edit-custom-tag" placeholder="添加新标签" 
+                                   class="px-3 py-1 border rounded form-control"><button onclick="addEditTag()" class="btn-glass">
+                                <i class="fas fa-plus"></i> 添加
+                            </button>
+                        </div>
+                    </div>                    <div class="flex justify-end gap-2">
+                        <button onclick="cancelEdit()" class="btn-glass-cancel transition-all duration-200">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                        <button onclick="saveEdit()" class="btn-glass transition-all duration-200">
+                            <i class="fas fa-check"></i> 保存
+                        </button>
+                    </div>
+                </div>                <div id="view-mode">
+                    <span id="upload-time" class="text-sm text-gray-600 font-medium"></span>
+                    <p id="record-description" class="text-gray-800 my-4 leading-relaxed"></p>
+                    <div id="record-tags" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script>
+        let currentRecord;
+        let currentIndex = 0;
+
+        function loadRecordData() {
+            console.log('加载详情页数据...');
+            try {
+                const recordData = sessionStorage.getItem('currentRecord');
+                if (!recordData) {
+                    throw new Error('未找到记录数据');
+                }
+
+                currentRecord = JSON.parse(recordData);
+                console.log('加载的记录:', currentRecord);
+
+                if (!currentRecord || !currentRecord.images || currentRecord.images.length === 0) {
+                    throw new Error('记录数据不完整');
+                }
+
+                renderDetail();
+                setupEventListeners();
+            } catch (error) {
+                console.error('数据加载错误:', error);
+                alert('加载失败: ' + error.message);
+                // 跳回首页
+                window.location.href = '../index.html';
+            }
+        }
+
+        function renderDetail() {
+            // 渲染主图
+            updateMainImage();
+            
+            // 渲染缩略图
+            renderThumbnails();            // 渲染信息
+            document.getElementById('record-title').textContent = currentRecord.title || '';
+            document.getElementById('upload-time').textContent = new Date(currentRecord.date).toLocaleString();
+            document.getElementById('record-description').textContent = currentRecord.description || '';            document.getElementById('record-tags').innerHTML = currentRecord.tags.map(tag => 
+                `<span class="tag-glass-static inline-block m-1">#${tag}</span>`
+            ).join('');
+        }        function renderThumbnails() {
+            const container = document.getElementById('thumbnails');
+            container.innerHTML = currentRecord.images.map((img, idx) => `
+                <div class="aspect-square cursor-pointer glass-effect overflow-hidden ${idx === currentIndex ? 'ring-2 ring-blue-500' : ''}"
+                     onclick="showImage(${idx})">
+                    <img src="${img.url}" 
+                         class="w-full h-full object-cover transition-transform duration-200"
+                         onerror="this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'24\\' height=\\'24\\'><rect fill=\\'%23ccc\\' width=\\'24\\' height=\\'24\\'/></svg>';">
+                </div>
+            `).join('');
+        }
+
+        function updateMainImage() {
+            const mainImage = document.getElementById('main-image');
+            const currentImage = currentRecord.images[currentIndex];
+            mainImage.src = currentImage.url;
+            mainImage.alt = currentImage.description || '';
+        }
+
+        function showImage(index) {
+            currentIndex = index;
+            updateMainImage();
+            document.querySelectorAll('#thumbnails > div').forEach((thumb, idx) => {
+                thumb.classList.toggle('ring-2', idx === index);
+                thumb.classList.toggle('ring-blue-500', idx === index);
+            });
+        }
+
+        // 切换图片事件
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            currentIndex = (currentIndex - 1 + currentRecord.images.length) % currentRecord.images.length;
+            showImage(currentIndex);
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % currentRecord.images.length;
+            showImage(currentIndex);
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') document.getElementById('prev-btn').click();
+            if (e.key === 'ArrowRight') document.getElementById('next-btn').click();
+        });
+
+        function toggleEdit() {
+            const editForm = document.getElementById('edit-form');
+            const viewMode = document.getElementById('view-mode');
+            
+            if (editForm.classList.contains('hidden')) {
+                // 进入编辑模式
+                document.getElementById('edit-title').value = currentRecord.title;
+                document.getElementById('edit-description').value = currentRecord.description;
+                renderEditTags();
+                
+                editForm.classList.remove('hidden');
+                viewMode.classList.add('hidden');
+            } else {
+                cancelEdit();
+            }
+        }
+
+        function renderEditTags() {
+            const container = document.getElementById('edit-tags');
+            const commonTags = ['早餐', '午餐', '晚餐', '小食'];              container.innerHTML = commonTags.map(tag => `
+                <button onclick="toggleEditTag('${tag}')"
+                        class="${currentRecord.tags.includes(tag) ? 'tag-glass' : 'tag-glass-static'}"
+                        data-tag="${tag}">
+                    ${tag}
+                </button>
+            `).join('') + currentRecord.tags
+                .filter(tag => !commonTags.includes(tag))
+                .map(tag => `
+                    <button onclick="toggleEditTag('${tag}')"
+                            class="tag-glass"
+                            data-tag="${tag}">
+                        ${tag}
+                    </button>
+                `).join('');
+        }
+
+        function toggleEditTag(tag) {
+            const btn = document.querySelector(`[data-tag="${tag}"]`);
+            if (btn) {
+                if (currentRecord.tags.includes(tag)) {
+                    currentRecord.tags = currentRecord.tags.filter(t => t !== tag);
+                    btn.classList.remove('tag-glass');
+                    btn.classList.add('tag-glass-static');
+                } else {
+                    currentRecord.tags.push(tag);
+                    btn.classList.remove('tag-glass-static');
+                    btn.classList.add('tag-glass');
+                }
+                btn.classList.add('transition-all', 'duration-200');
+            }
+        }
+
+        function addEditTag() {
+            const input = document.getElementById('edit-custom-tag');
+            const tag = input.value.trim();
+            
+            if (!tag) {
+                return;
+            }
+
+            if (!currentRecord.tags.includes(tag)) {
+                currentRecord.tags.push(tag);
+                renderEditTags();
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        async function saveEdit() {
+            const title = document.getElementById('edit-title').value.trim();
+            const description = document.getElementById('edit-description').value.trim();
+            
+            if (!title) {
+                alert('标题不能为空！');
+                return;
+            }
+
+            try {
+                // 显示保存中状态
+                const saveBtn = document.querySelector('button[onclick="saveEdit()"]');
+                const originalContent = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+                saveBtn.disabled = true;
+
+                // 更新本地记录对象
+                currentRecord.title = title;
+                currentRecord.description = description;
+                // 标签已经在 toggleEditTag 和 addEditTag 中直接修改了 currentRecord.tags
+                
+                // 调用 API 保存到 R2
+                console.log('正在调用 API 保存记录:', currentRecord);
+                await api.saveRecord(currentRecord); // 调用 api.js 中的 saveRecord 函数
+                console.log('记录保存到 R2 成功。');
+
+                // 更新显示
+                renderDetail();
+                cancelEdit();
+
+                // 显示成功消息
+                alert('保存成功！');
+
+            } catch (error) {
+                console.error('保存失败:', error);
+                alert('保存失败: ' + error.message);
+            } finally {
+                // 恢复按钮状态
+                const saveBtn = document.querySelector('button[onclick="saveEdit()"]');
+                // 检查按钮是否还存在（如果在跳转前保存成功并跳转了，可能不存在）
+                if(saveBtn) {
+                    saveBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
+                    saveBtn.disabled = false;
+                }
+            }
+        }
+
+        function cancelEdit() {
+            const editForm = document.getElementById('edit-form');
+            const viewMode = document.getElementById('view-mode');
+            
+            // 重置表单内容
+            document.getElementById('edit-title').value = currentRecord.title;
+            document.getElementById('edit-description').value = currentRecord.description;
+            renderEditTags();
+            
+            // 切换显示模式
+            editForm.classList.add('hidden');
+            viewMode.classList.remove('hidden');
+        }
+
+        // 新增函数：处理删除记录的核心逻辑
+        async function handleDeleteRecord(recordId) {
+            if (!confirm('确定要删除这条记录吗？删除后将无法恢复！')) {
+                return;
+            }
+
+            try {
+                console.log(`尝试删除记录 ID: ${recordId}`);
+
+                // 调用后端删除 API
+                const response = await fetch(`http://localhost:3000/api/records/${recordId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('删除失败');
+                }
+
+                console.log('后端删除接口返回成功。');
+
+                alert('删除成功！即将跳转回首页...');
+                // 删除成功后跳转到首页
+                window.location.href = '../index.html';
+
+            } catch (error) {
+                console.error('删除失败:', error);
+                alert('删除失败: ' + error.message);
+            }
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            const deleteButton = document.getElementById('delete-button');
+            if (deleteButton) {
+                deleteButton.addEventListener('click', () => {
+                    console.log('点击了删除按钮 (事件监听器)，记录 ID:', currentRecord.id);
+                    // 调用新的删除处理函数
+                    handleDeleteRecord(currentRecord.id);
+                });
+            }
+            // 其他事件监听器也可以在这里设置
+            // ...
+        }
+
+        // 确保页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', loadRecordData);
+    </script>
+</body>
+</html>
